@@ -1,12 +1,13 @@
 import { Hono } from "hono"
+import { env } from "cloudflare:workers";
 import { setCookie, getCookie } from "hono/cookie"
 import * as arctic from "arctic"
 
 const authRoute = new Hono()
 
 const discord = new arctic.Discord(
-    "1484521125550620813",
-    "KVN-hAJ5gszFGJGRcwh_rez7lE3T-JA8",
+    env.DISCORD_CLIENT_ID,
+    env.DISCORD_CLIENT_SECRET,
     "http://127.0.0.1:8787/auth/callback",
 )
 
