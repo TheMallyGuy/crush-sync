@@ -2,7 +2,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sync",
   "main": "src/index.ts",
-  "compatibility_date": "2026-06-14"
+  "compatibility_date": "2026-06-14",
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "4f3ba14ddbcf804bc1ff2fc892c8ee88" // replace this with your kv if youre self hosting
+    }
+  ]
   // // "compatibility_flags": [
   // //   "nodejs_compat"
   // // ],

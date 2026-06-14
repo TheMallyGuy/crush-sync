@@ -7,7 +7,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^4.20260613.1",
     "arctic": "^3.7.0",
+    "e2ee.js": "^1.1.8",
     "hono": "^4.12.25"
   },
   "devDependencies": {
