@@ -10,20 +10,7 @@
     }
   ],
   "vars": {
-    "DISCORD_REDIRECT_URI": "http://127.0.0.1:8787/auth/callback"
-  },
-  "env": {
-    "production": {
-      "kv_namespaces": [
-        {
-          "binding": "KV",
-          "id": "283b1cf9e8fe4a66b8311eb9d07daa8e" // replace this, too
-        }
-      ],
-      "vars": {
-        "DISCORD_REDIRECT_URI": "https://cloud-config.mally.qzz.io/auth/callback" // replace with your url when self hosting too
-      }
-    }
+    "DISCORD_REDIRECT_URI": "https://cloud-config.mally.qzz.io/auth/callback"
   }
   // // "compatibility_flags": [
   // //   "nodejs_compat"
