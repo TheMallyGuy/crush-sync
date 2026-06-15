@@ -1,0 +1,8 @@
+# copy this file to .dev.vars (gitignored) and fill in real values for local dev
+# wrangler dev loads these and they override `vars` from wrangler.jsonc
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+
+# local override of the production redirect URI in wrangler.jsonc
+# must also be registered in the Discord dev portal.
+DISCORD_REDIRECT_URI=http://127.0.0.1:8787/auth/callback
