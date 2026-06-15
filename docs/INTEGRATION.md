@@ -189,6 +189,10 @@ The server stores an opaque string and cannot decrypt it. For two apps to share
 a user's config, they must implement the **same** envelope and the user must use
 the **same** password.
 
+Drop-in TypeScript and C# reference implementations are in
+**[ENCRYPTION.md](ENCRYPTION.md)** — copy one of those rather than rolling your
+own; the tag-placement detail is easy to get wrong.
+
 - **KDF:** PBKDF2, SHA-256, 200,000 iterations, random 16-byte salt.
 - **Cipher:** AES-GCM, 256-bit key, random 12-byte IV.
 - **Plaintext:** UTF-8 JSON of `CloudUniversalConfig`.
