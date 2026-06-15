@@ -23,8 +23,8 @@ configRoute.post("/sync", async (c) => {
 
     const session: Session = JSON.parse(raw)
 
-    const receivedJson = await c.req.json()
-    await env.KV.put(`config:${session.userId}`, JSON.stringify(receivedJson))
+    const receivedConfig = await c.req.text()
+    await env.KV.put(`config:${session.userId}`, receivedConfig)
 
     return c.text("Success", 200)
 })
