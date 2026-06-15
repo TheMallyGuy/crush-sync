@@ -8,6 +8,7 @@ const app = new Hono()
 
 app.use("/v1/auth/*", cors())
 app.use("/v1/config/*", cors())
+app.use("/v2/config/*", cors())
 
 app.route("/v1/auth", authRoute)
 app.route("/v1/config", configRoute)
