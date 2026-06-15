@@ -40,11 +40,31 @@ suggestions — the whole point of a shared cloud is that everyone plays by them
    over it — surface an "update required" state instead.
 5. **The auth token is per user, not per app.** It identifies the human, not
    your bootstrapper. Don't share it, log it, or send it anywhere but this API.
-6. **Encryption is end-to-end.** The server stores an opaque blob and cannot
-   read it. If you want cross-app interop for a user, you must use the same
-   [envelope format](#encryption) and the user must use the same password.
+6. **Encryption.** On `/v1/config` it is end-to-end — the server stores an opaque
+   blob and cannot read it; use the same [envelope](#encryption) and password for
+   cross-app interop. `/v2/config` encrypts server-side and is **not** private
+   from the server; prefer v1.
 7. **Don't abuse it.** No polling tighter than the documented cadence, no bulk
    scraping, no storing data unrelated to bootstrapper configuration.
+
+---
+
+## API versions
+
+Authentication is shared and lives under `/v1/auth/*` regardless of which config
+version you use. Config storage comes in two flavours:
+
+| | `/v1/config` — **recommended** | `/v2/config` — convenience |
+|---|---|---|
+| Where encryption happens | **Client** (end-to-end) | **Server** |
+| What the server receives | opaque ciphertext only | your **plaintext** config + your **password** |
+| What the server stores | ciphertext | ciphertext (encrypted server-side) |
+| Trust model | **zero-trust** — server can't read your data | you must trust the operator not to read/log it |
+| Client must implement crypto | yes (see [ENCRYPTION.md](ENCRYPTION.md)) | no |
+
+**Use v1 unless you have a strong reason not to.** v2 exists only so a client
+that can't implement the encryption can still get encryption *at rest*. It is
+**not** private from the server — see the warning in [Encryption](#encryption).
 
 ---
 
@@ -185,13 +205,8 @@ like a change and you'll sync in a loop.
 
 ## Encryption
 
-The server stores an opaque string and cannot decrypt it. For two apps to share
-a user's config, they must implement the **same** envelope and the user must use
-the **same** password.
-
-Drop-in TypeScript and C# reference implementations are in
-**[ENCRYPTION.md](ENCRYPTION.md)** — copy one of those rather than rolling your
-own; the tag-placement detail is easy to get wrong.
+Both versions encrypt with the **same scheme** (PBKDF2 → AES-GCM, same envelope).
+The only difference is **where** it runs and therefore **who can read your data**.
 
 - **KDF:** PBKDF2, SHA-256, 200,000 iterations, random 16-byte salt.
 - **Cipher:** AES-GCM, 256-bit key, random 12-byte IV.
@@ -207,12 +222,34 @@ own; the tag-placement detail is easy to get wrong.
 }
 ```
 
-A failed AES-GCM auth tag means the wrong password — treat it as such and change
-nothing locally. The password is **never** uploaded; losing it makes the synced
-config unrecoverable by design.
+### v1 — end-to-end (recommended)
 
-> Encryption is strongly recommended but not enforced by the server. If you store
-> plaintext, you store plaintext for everyone — don't.
+The **client** encrypts before uploading and decrypts after downloading. The
+server stores an opaque string and **cannot read it**. The password is **never**
+uploaded. For two apps to share a user's config they must implement the same
+envelope and the user must use the same password.
+
+Drop-in TypeScript and C# reference implementations are in
+**[ENCRYPTION.md](ENCRYPTION.md)** — copy one of those rather than rolling your
+own; the tag-placement detail is easy to get wrong. A failed AES-GCM auth tag
+means the wrong password; change nothing locally. Losing the password makes the
+config unrecoverable by design — that's the point.
+
+### v2 — server-side (encryption at rest only)
+
+The **client** sends the **plaintext** config and the password in a `Passwords`
+header; the **server** does the encryption. The client implements no crypto.
+
+> ### ⚠️ v2 is NOT private from the server
+> With v2 the server receives your plaintext config and your password on every
+> request. It encrypts *after* receiving them, so at that moment it — and anyone
+> who can log its traffic or change its code — can read both. v2 only protects
+> against a **stolen database** (the data is ciphertext at rest). It does **not**
+> give the zero-trust guarantee of v1. Do not describe v2 to users as "private"
+> or "end-to-end"; describe it as "encrypted at rest."
+
+The server does not persist the password, but "we don't save it" is a promise,
+not a cryptographic guarantee. If you can run v1, run v1.
 
 ---
 
@@ -225,15 +262,20 @@ Base URL: `https://cloud-config.mally.qzz.io`
 | `GET`  | `/v1/auth/login?pair=<id>` | — | Opens Discord OAuth (browser). |
 | `GET`  | `/v1/auth/poll?pair=<id>`  | — | `200 {token}` once ready, else `204`. Consumed on read. |
 | `POST` | `/v1/auth/me`              | Bearer | Validate token; `200` if valid. |
-| `POST` | `/v1/config/sync`          | Bearer | Store the (encrypted) blob. Body is `text/plain`. |
-| `GET`  | `/v1/config/sync`          | Bearer | Retrieve the stored blob. |
+| `POST` | `/v1/config/sync`          | Bearer | **E2E.** Store the client-encrypted blob. Body `text/plain`. |
+| `GET`  | `/v1/config/sync`          | Bearer | **E2E.** Retrieve the stored blob (client decrypts). |
+| `POST` | `/v2/config/sync`          | Bearer + `Passwords` | **At-rest.** Send plaintext; server encrypts with the `Passwords` header. |
+| `GET`  | `/v2/config/sync`          | Bearer + `Passwords` | **At-rest.** Server decrypts and returns plaintext. |
 
-All authenticated calls send `Authorization: Bearer <token>`. CORS is enabled,
-but native HTTP clients are recommended over browser `fetch` for desktop apps.
+All authenticated calls send `Authorization: Bearer <token>`. v2 additionally
+requires a `Passwords: <password>` header on both methods. Native HTTP clients
+are recommended over browser `fetch` for desktop apps.
 
 ---
 
 ## Reference flow (pseudocode)
+
+### v1 — end-to-end (recommended)
 
 ```ts
 const BASE = 'https://cloud-config.mally.qzz.io/v1'
@@ -245,13 +287,34 @@ const merged = mergeUniversal(existing, contribution)
 await fetch(`${BASE}/config/sync`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'text/plain' },
-    body: await encrypt(JSON.stringify(merged), pw),
+    body: await encrypt(JSON.stringify(merged), pw),     // CLIENT encrypts
 })
 
 // down
 const blob = JSON.parse(await decrypt(await getBody(BASE, token), pw))
 if (blob.schemaVersion !== 1) throw new Error('update required')
 applyUniversalToMyConfig(blob)                           // common fields + vendor.myapp
+```
+
+### v2 — server-side (no client crypto)
+
+The merge still applies; you just fetch/send **plaintext** and pass the password
+as a header. Same caveats as the [Encryption](#encryption) warning.
+
+```ts
+const BASE = 'https://cloud-config.mally.qzz.io/v2'
+const headers = { Authorization: `Bearer ${token}`, Passwords: pw }
+
+// down: server decrypts and returns plaintext JSON
+const existing = JSON.parse(await (await fetch(`${BASE}/config/sync`, { headers })).text())
+
+// up: send plaintext; server encrypts at rest
+const merged = mergeUniversal(existing, mapMyConfigToUniversal())
+await fetch(`${BASE}/config/sync`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'text/plain' },
+    body: JSON.stringify(merged),                        // SERVER encrypts
+})
 ```
 
 Questions or a new vendor id to reserve? Open an issue on

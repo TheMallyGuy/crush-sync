@@ -70,12 +70,14 @@ responsibility, not a license to use it.
 
 ## 5. Encryption and passwords
 
-1. End-to-end encryption is **strongly required**. If your app encrypts, it
-   **MUST** use the documented [envelope](INTEGRATION.md#encryption) and **MUST
-   NOT** weaken its parameters.
-2. The user's encryption password **MUST** stay on the device. You **MUST NOT**
-   upload it, transmit it, log it, embed it in the blob, or derive a server-known
-   value from it.
+1. End-to-end encryption (`/v1/config`) is **strongly preferred**. If your app
+   encrypts client-side, it **MUST** use the documented
+   [envelope](INTEGRATION.md#encryption) and **MUST NOT** weaken its parameters.
+2. With the E2E flow the user's password **MUST** stay on the device — you
+   **MUST NOT** upload, transmit, log, or persist it. The `/v2/config` flow sends
+   the password to the server by design (`Passwords` header); if you use v2 you
+   **MUST** tell users their config is only *encrypted at rest*, **not** private
+   from the operator, and you **MUST NOT** advertise it as end-to-end.
 3. You **MUST NOT** attempt to brute-force, weaken, or circumvent another app's
    encryption, or downgrade an encrypted blob to plaintext.
 

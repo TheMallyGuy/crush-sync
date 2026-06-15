@@ -6,6 +6,11 @@ This is the canonical encryption scheme Crush uses for the cloud blob. Any
 bootstrapper that wants to share a user's config **MUST** implement it
 byte-for-byte, so the same password decrypts on every app and platform.
 
+> Applies to the **end-to-end `/v1/config`** flow, where the client encrypts.
+> `/v2/config` uses this same scheme but runs it **server-side** — see the
+> [trust caveat](INTEGRATION.md#encryption). If you use v2 you don't implement
+> any of this; you send plaintext and a `Passwords` header.
+
 Reference implementations for **TypeScript** (WebCrypto) and **C#** (.NET) are
 below. They are interoperable: a blob encrypted by one decrypts with the other.
 
