@@ -8,7 +8,7 @@ app.route("/auth", authRoute)
 app.route("/config", configRoute)
 
 app.get('/', (c) => {
-  return c.text('Hello Hono!')
+  return c.redirect("https://github.com/themallyguy/crush-sync")
 })
 
 export default app
