@@ -8,11 +8,24 @@ const authRoute = new Hono()
 const discord = new arctic.Discord(
     env.DISCORD_CLIENT_ID,
     env.DISCORD_CLIENT_SECRET,
-    "http://127.0.0.1:8787/auth/callback",
+    env.DISCORD_REDIRECT_URI,
 )
 
+type UserData = {
+    id: string
+    username: string
+    avatar: string
+}
+
+const PAIR_TTL = 300
+
 authRoute.get("/login", (c) => {
-    const state = arctic.generateState()
+    const pair = c.req.query("pair")
+    if (!pair) {
+        return c.text("Missing pair", 400)
+    }
+
+    const state = `${arctic.generateState()}.${pair}`
     const scopes = ["identify", "email"]
     const url = discord.createAuthorizationURL(state, null, scopes)
 
@@ -35,21 +48,29 @@ authRoute.get("/callback", async (c) => {
         return c.text("Invalid request", 400)
     }
 
+    const pair = state.split(".")[1]
+    if (!pair) {
+        return c.text("Invalid request", 400)
+    }
+
     try {
         const tokens = await discord.validateAuthorizationCode(code, null)
 
-        setCookie(c, "access_token", tokens.accessToken(), {
-            httpOnly: true,
-            secure: true,
-            sameSite: "Lax",
-            path: "/",
+        const response = await fetch("https://discord.com/api/users/@me", {
+            headers: {
+                Authorization: `Bearer ${tokens.accessToken()}`,
+            },
         })
-        setCookie(c, "refresh_token", tokens.refreshToken(), {
-            httpOnly: true,
-            secure: true,
-            sameSite: "Lax",
-            path: "/",
-        })
+        const userData: UserData = await response.json()
+
+        const token = crypto.randomUUID()
+        await env.KV.put(`token:${token}`, JSON.stringify({
+            userId: userData.id,
+            username: userData.username,
+        }))
+
+        await env.KV.put(`pair:${pair}`, token, { expirationTtl: PAIR_TTL })
+
         return c.text("Running on cookies! authorized, you now may close this page")
     } catch (e) {
         if (e instanceof arctic.OAuth2RequestError) {
@@ -60,6 +81,22 @@ authRoute.get("/callback", async (c) => {
         }
         throw e
     }
+})
+
+
+authRoute.get("/poll", async (c) => {
+    const pair = c.req.query("pair")
+    if (!pair) {
+        return c.text("Missing pair", 400)
+    }
+
+    const token = await env.KV.get(`pair:${pair}`)
+    if (!token) {
+        return c.body(null, 204)
+    }
+
+    await env.KV.delete(`pair:${pair}`)
+    return c.json({ token })
 })
 
 export default authRoute

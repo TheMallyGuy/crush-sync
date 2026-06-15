@@ -8,7 +8,23 @@
       "binding": "KV",
       "id": "4f3ba14ddbcf804bc1ff2fc892c8ee88" // replace this with your kv if youre self hosting
     }
-  ]
+  ],
+  "vars": {
+    "DISCORD_REDIRECT_URI": "http://127.0.0.1:8787/auth/callback"
+  },
+  "env": {
+    "production": {
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "4f3ba14ddbcf804bc1ff2fc892c8ee88"
+        }
+      ],
+      "vars": {
+        "DISCORD_REDIRECT_URI": "https://sync.example.workers.dev/auth/callback" // replace with your url when self hosting too
+      }
+    }
+  }
   // // "compatibility_flags": [
   // //   "nodejs_compat"
   // // ],
