@@ -6,7 +6,7 @@
   "kv_namespaces": [
     {
       "binding": "KV",
-      "id": "4f3ba14ddbcf804bc1ff2fc892c8ee88" // replace this with your kv if youre self hosting
+      "id": "283b1cf9e8fe4a66b8311eb9d07daa8e" // replace this with your kv if youre self hosting
     }
   ],
   "vars": {
@@ -17,7 +17,7 @@
       "kv_namespaces": [
         {
           "binding": "KV",
-          "id": "4f3ba14ddbcf804bc1ff2fc892c8ee88"
+          "id": "283b1cf9e8fe4a66b8311eb9d07daa8e" // replace this, too
         }
       ],
       "vars": {
