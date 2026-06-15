@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import authRoute from "./auth/auth"
-import configRoute from './config/config'
+import authRoute from "./v1/auth/auth"
+import configRoute from './v1/config/config'
 
 const app = new Hono()
 
