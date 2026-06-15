@@ -11,6 +11,11 @@ const discord = new arctic.Discord(
     env.DISCORD_REDIRECT_URI,
 )
 
+type Session = {
+    userId: string
+    username: string
+}
+
 type UserData = {
     id: string
     username: string
@@ -98,5 +103,25 @@ authRoute.get("/poll", async (c) => {
     await env.KV.delete(`pair:${pair}`)
     return c.json({ token })
 })
+
+
+authRoute.post("/me", async (c) => {
+    const authHeader = c.req.header("Authorization")
+    const token = authHeader?.replace("Bearer ", "")
+
+    if (!token) {
+        return c.text("Unauthorized", 401)
+    }
+
+    const raw = await env.KV.get(`token:${token}`)
+    if (!raw) {
+        return c.text("Unauthorized", 401)
+    }
+
+    const session: Session = JSON.parse(raw)
+
+    return c.text(`Logged in as ${session.username}`, 200)
+})
+
 
 export default authRoute
