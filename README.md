@@ -1,21 +1,7 @@
-```txt
-npm install
-npm run dev
-```
+# Crush Config Sync API
 
-```txt
-npm run deploy
-```
+An API for syncing Crush configuration, built with [Hono](https://hono.dev/) on the Cloudflare ecosystem.
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+## Integrating
 
-```txt
-npm run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiating `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+If you're integrating this into your bootstrapper, please use end-to-end encryption. It isn't required, but it's strongly recommended to protect user data.
