@@ -21,7 +21,7 @@
         }
       ],
       "vars": {
-        "DISCORD_REDIRECT_URI": "https://sync.example.workers.dev/auth/callback" // replace with your url when self hosting too
+        "DISCORD_REDIRECT_URI": "https://cloud-config.mally.qzz.io/auth/callback" // replace with your url when self hosting too
       }
     }
   }
