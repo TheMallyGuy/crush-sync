@@ -5,11 +5,11 @@ import configRoute from './config/config'
 
 const app = new Hono()
 
-app.use("/auth/*", cors())
-app.use("/config/*", cors())
+app.use("/v1/auth/*", cors())
+app.use("/v1/config/*", cors())
 
-app.route("/auth", authRoute)
-app.route("/config", configRoute)
+app.route("/v1/auth", authRoute)
+app.route("/v1/config", configRoute)
 
 app.get('/', (c) => {
   return c.redirect("https://github.com/themallyguy/crush-sync")
