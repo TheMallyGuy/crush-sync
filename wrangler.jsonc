@@ -10,7 +10,7 @@
     }
   ],
   "vars": {
-    "DISCORD_REDIRECT_URI": "https://cloud-config.mally.qzz.io/auth/callback"
+    "DISCORD_REDIRECT_URI": "https://cloud-config.mally.qzz.io/v1/auth/callback"
   }
   // // "compatibility_flags": [
   // //   "nodejs_compat"
